@@ -30,15 +30,19 @@ jobs:
       - name: Get Shared API ID from CloudFormation export
         id: get_api_id
         run: |
-          export API_ID=$(aws cloudformation list-exports \
+          echo "Fetching Shared API ID..."
+          API_ID=$(aws cloudformation list-exports \
             --query "Exports[?Name=='SharedApiId'].Value" \
             --output text)
           echo "api_id=$API_ID" >> $GITHUB_OUTPUT
-
-      - name: Build and deploy SAM
+      
+      - name: Inject API ID into template
         run: |
-          sam build \
-            --template-file infra/template.yaml
-          sam deploy \  
-            --parameter-overrides SharedApiId=${{ steps.get_api_id.outputs.api_id }} \
-            --config-env default 
+          echo "Injecting API ID into template.yaml..."
+          sed -i "s|REPLACE_WITH_API_ID|${{ steps.get_api_id.outputs.api_id }}|g" infra/template.yaml
+
+      - name: Build SAM
+        run: sam build --template-file infra/template.yaml
+      
+      - name: Deploy SAM
+        run: sam deploy --config-env default

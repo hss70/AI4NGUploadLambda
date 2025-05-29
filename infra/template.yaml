@@ -41,7 +41,7 @@ Resources:
           Properties:
             Path: /api/upload
             Method: GET
-            ApiId: !Ref SharedApiId
+            ApiId: REPLACE_WITH_API_ID
             Auth:
               Authorizer: CognitoAuthorizer
 
