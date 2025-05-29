@@ -16,22 +16,13 @@ Globals:
       AllowOrigin: "'*'"
 
 Resources:
-  # API Gateway (HTTP API)
-  AI4NGHttpApi:
-    Type: AWS::Serverless::HttpApi
+  # S3 Bucket
+  EEGUploadBucket:
+    Type: AWS::S3::Bucket
     Properties:
-      Name: AI4NG-dev
-      StageName: dev
-      Auth:
-        DefaultAuthorizer: CognitoAuthorizer
-        Authorizers:
-          CognitoAuthorizer:
-            Type: JWT
-            IdentitySource: "$request.header.Authorization"
-            JwtConfiguration:
-              Audience:
-                - 517s6c84jo5i3lqste5idb0o4c  # Cognito App Client ID
-              Issuer: https://cognito-idp.eu-west-2.amazonaws.com/eu-west-2_EaNz6cSp0
+      BucketName: ai4ngstore-dev
+      VersioningConfiguration:
+        Status: Enabled
 
   # Lambda Function: EEG Upload
   AI4NGUploadLambda:
@@ -39,17 +30,20 @@ Resources:
     Properties:
       Handler: AI4NGUploadLambda::AI4NGUploadLambda.Function::FunctionHandler
       CodeUri: ../src/AI4NGUploadLambda
+      Environment:
+        Variables:
+          UPLOAD_BUCKET: !Ref EEGUploadBucket
       Policies:
         - AWSLambdaBasicExecutionRole
         - S3WritePolicy:
-            BucketName: ai4ngstore
+            BucketName: !Ref EEGUploadBucket
       Events:
         GeneratePresignedUrl:
           Type: HttpApi
           Properties:
             Path: /api/upload
             Method: GET
-            ApiId: !Ref AI4NGHttpApi
+            ApiId: !ImportValue SharedApiId
             Auth:
               Authorizer: CognitoAuthorizer
 

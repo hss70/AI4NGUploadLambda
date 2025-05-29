@@ -10,13 +10,13 @@ namespace AI4NGUploadLambda;
 
 public class Function
 {
-    private const string BUCKET_NAME = "ai4ngstore";
     private static readonly AmazonS3Client s3Client = new(GetRegion());
 
     public async Task<APIGatewayProxyResponse> FunctionHandler(APIGatewayProxyRequest request, ILambdaContext context)
     {
         try
         {
+            var bucketName = Environment.GetEnvironmentVariable("UPLOAD_BUCKET");
 
             context.Logger.LogLine($"Function started at: {DateTime.Now}");
             context.Logger.LogLine($"Request: {request}");
@@ -39,7 +39,7 @@ public class Function
 
             var presignRequest = new GetPreSignedUrlRequest
             {
-                BucketName = BUCKET_NAME,
+                BucketName = bucketName,
                 Key = key,
                 Verb = HttpVerb.PUT,
                 Expires = DateTime.UtcNow.Add(expiresIn)
