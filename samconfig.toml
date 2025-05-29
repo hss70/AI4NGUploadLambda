@@ -1,0 +1,10 @@
+version = 0.1
+[default.deploy.parameters]
+stack_name = "AI4NGUpload-dev"
+resolve_s3 = true
+s3_bucket = "ai4ng-sam-artifacts"
+s3_prefix = "AI4NGUpload-dev"
+region = "eu-west-2"
+confirm_changeset = false
+capabilities = "CAPABILITY_IAM"
+image_repositories = []

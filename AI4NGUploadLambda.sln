@@ -1,0 +1,42 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.2.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "AI4NGUploadLambda", "AI4NGUploadLambda", "{859698FD-909F-A67B-FDA8-6C25D2992005}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{CA1A74DC-D2D5-53BF-7F9B-C8740F75BB12}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AI4NGUploadLambda", "src\AI4NGUploadLambda\AI4NGUploadLambda.csproj", "{F44DCBDF-E4F6-F6B8-AC86-7DF4D1376441}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{A3B9356C-A2EC-56AA-D019-02AA8A602BE5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AI4NGUploadLambda.Tests", "test\AI4NGUploadLambda.Tests\AI4NGUploadLambda.Tests.csproj", "{BC612D47-06E2-B883-45BD-165B5B42ECB3}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{F44DCBDF-E4F6-F6B8-AC86-7DF4D1376441}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F44DCBDF-E4F6-F6B8-AC86-7DF4D1376441}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F44DCBDF-E4F6-F6B8-AC86-7DF4D1376441}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F44DCBDF-E4F6-F6B8-AC86-7DF4D1376441}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BC612D47-06E2-B883-45BD-165B5B42ECB3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BC612D47-06E2-B883-45BD-165B5B42ECB3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BC612D47-06E2-B883-45BD-165B5B42ECB3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BC612D47-06E2-B883-45BD-165B5B42ECB3}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{CA1A74DC-D2D5-53BF-7F9B-C8740F75BB12} = {859698FD-909F-A67B-FDA8-6C25D2992005}
+		{F44DCBDF-E4F6-F6B8-AC86-7DF4D1376441} = {CA1A74DC-D2D5-53BF-7F9B-C8740F75BB12}
+		{A3B9356C-A2EC-56AA-D019-02AA8A602BE5} = {859698FD-909F-A67B-FDA8-6C25D2992005}
+		{BC612D47-06E2-B883-45BD-165B5B42ECB3} = {A3B9356C-A2EC-56AA-D019-02AA8A602BE5}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {EC5BD3E6-8E66-4494-8632-83B55E31CE3C}
+	EndGlobalSection
+EndGlobal

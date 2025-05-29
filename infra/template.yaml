@@ -1,0 +1,59 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: AI4NG EEG Upload Lambda API
+
+Globals:
+  Function:
+    Timeout: 30
+    MemorySize: 256
+    Runtime: dotnet8
+
+  Api:
+    Name: AI4NG-dev
+    Cors:
+      AllowMethods: "'GET,POST,OPTIONS'"
+      AllowHeaders: "'Content-Type,Authorization'"
+      AllowOrigin: "'*'"
+
+Resources:
+  # API Gateway (HTTP API)
+  AI4NGHttpApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      Name: AI4NG-dev
+      StageName: dev
+      Auth:
+        DefaultAuthorizer: CognitoAuthorizer
+        Authorizers:
+          CognitoAuthorizer:
+            Type: JWT
+            IdentitySource: "$request.header.Authorization"
+            JwtConfiguration:
+              Audience:
+                - 517s6c84jo5i3lqste5idb0o4c  # Cognito App Client ID
+              Issuer: https://cognito-idp.eu-west-2.amazonaws.com/eu-west-2_EaNz6cSp0
+
+  # Lambda Function: EEG Upload
+  AI4NGUploadLambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: AI4NGUploadLambda::AI4NGUploadLambda.Function::FunctionHandler
+      CodeUri: ../src/AI4NGUploadLambda
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - S3WritePolicy:
+            BucketName: ai4ngstore
+      Events:
+        GeneratePresignedUrl:
+          Type: HttpApi
+          Properties:
+            Path: /api/upload
+            Method: GET
+            ApiId: !Ref AI4NGHttpApi
+            Auth:
+              Authorizer: CognitoAuthorizer
+
+Outputs:
+  UploadApiEndpoint:
+    Description: "EEG Upload API endpoint URL"
+    Value: !Sub "https://${AI4NGHttpApi}.execute-api.${AWS::Region}.amazonaws.com/dev/api/upload"
