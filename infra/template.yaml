@@ -2,18 +2,16 @@ AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Description: AI4NG EEG Upload Lambda API
 
+Parameters:
+  SharedApiId:
+    Type: String
+    Description: "API Gateway ID exported from shared API stack"
+
 Globals:
   Function:
     Timeout: 30
     MemorySize: 256
     Runtime: dotnet8
-
-  Api:
-    Name: AI4NG-dev
-    Cors:
-      AllowMethods: "'GET,POST,OPTIONS'"
-      AllowHeaders: "'Content-Type,Authorization'"
-      AllowOrigin: "'*'"
 
 Resources:
   # S3 Bucket
@@ -43,11 +41,11 @@ Resources:
           Properties:
             Path: /api/upload
             Method: GET
-            ApiId: !ImportValue SharedApiId
+            ApiId: !Ref SharedApiId
             Auth:
               Authorizer: CognitoAuthorizer
 
 Outputs:
   UploadApiEndpoint:
     Description: "EEG Upload API endpoint URL"
-    Value: !Sub "https://${AI4NGHttpApi}.execute-api.${AWS::Region}.amazonaws.com/dev/api/upload"
+    Value: !Sub "https://${SharedApiId}.execute-api.${AWS::Region}.amazonaws.com/dev/api/upload"

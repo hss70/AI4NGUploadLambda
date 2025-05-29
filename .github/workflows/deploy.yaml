@@ -27,7 +27,18 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_DEV }}
           aws-region: eu-west-2
 
+      - name: Get Shared API ID from CloudFormation export
+        id: get_api_id
+        run: |
+          export API_ID=$(aws cloudformation list-exports \
+            --query "Exports[?Name=='SharedApiId'].Value" \
+            --output text)
+          echo "api_id=$API_ID" >> $GITHUB_OUTPUT
+
       - name: Build and deploy SAM
         run: |
-          sam build --template-file infra/template.yaml
-          sam deploy --config-env default
+          sam build \
+            --template-file infra/template.yaml
+          sam deploy \  
+            --parameter-overrides SharedApiId=${{ steps.get_api_id.outputs.api_id }} \
+            --config-env default 
