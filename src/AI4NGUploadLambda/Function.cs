@@ -5,7 +5,7 @@ using Amazon.S3.Model;
 using System.Text.Json;
 using System.IdentityModel.Tokens.Jwt;
 
-[assembly: LambdaSerializer(typeof(Amazon.Lambda.Serialization.SystemTextJson.LambdaJsonSerializer))]
+[assembly: LambdaSerializer(typeof(Amazon.Lambda.Serialization.SystemTextJson.DefaultLambdaJsonSerializer))]
 namespace AI4NGUploadLambda;
 
 public class Function

@@ -1,7 +1,7 @@
 version = 0.1
 [default.deploy.parameters]
 stack_name = "AI4NGUpload-dev"
-s3_bucket = "ai4ng-sam-artifacts"
+s3_bucket = "aws-sam-cli-managed-default-samclisourcebucket-elqih9cswhbb"
 s3_prefix = "AI4NGUpload-dev"
 region = "eu-west-2"
 confirm_changeset = false
