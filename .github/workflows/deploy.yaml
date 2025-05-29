@@ -35,10 +35,12 @@ jobs:
             --query "Exports[?Name=='SharedApiId'].Value" \
             --output text)
           echo "api_id=$API_ID" >> $GITHUB_OUTPUT
-      
+
       - name: Build SAM
         run: sam build --template-file infra/template.yaml
-      
+
       - name: Deploy SAM
-        run: sam deploy --parameter-overrides SharedApiId=${{ steps.get_api_id.outputs.api_id }} \
-         --config-env default
+        run: |
+          sam deploy \
+            --parameter-overrides SharedApiId=${{ steps.get_api_id.outputs.api_id }} \
+            --config-env default
