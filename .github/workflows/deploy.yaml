@@ -36,13 +36,9 @@ jobs:
             --output text)
           echo "api_id=$API_ID" >> $GITHUB_OUTPUT
       
-      - name: Inject API ID into template
-        run: |
-          echo "Injecting API ID into template.yaml..."
-          sed -i "s|REPLACE_WITH_API_ID|${{ steps.get_api_id.outputs.api_id }}|g" infra/template.yaml
-
       - name: Build SAM
         run: sam build --template-file infra/template.yaml
       
       - name: Deploy SAM
-        run: sam deploy --config-env default
+        run: sam deploy --parameter-overrides SharedApiId=${{ steps.get_api_id.outputs.api_id }} \
+         --config-env default
