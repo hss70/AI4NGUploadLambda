@@ -1,11 +1,11 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
-Description: AI4NG EEG Upload Lambda API
+Description: AI4NG EEG Upload Lambda API (Manual API Integration)
 
 Parameters:
   SharedApiId:
     Type: String
-    Description: "API Gateway ID exported from shared API stack"
+    Description: Existing API Gateway HTTP API ID
 
 Globals:
   Function:
@@ -14,7 +14,6 @@ Globals:
     Runtime: dotnet8
 
 Resources:
-  # S3 Bucket
   EEGUploadBucket:
     Type: AWS::S3::Bucket
     Properties:
@@ -22,7 +21,6 @@ Resources:
       VersioningConfiguration:
         Status: Enabled
 
-  # Lambda Function: EEG Upload
   AI4NGUploadLambda:
     Type: AWS::Serverless::Function
     Properties:
@@ -35,17 +33,32 @@ Resources:
         - AWSLambdaBasicExecutionRole
         - S3WritePolicy:
             BucketName: !Ref EEGUploadBucket
-      Events:
-        GeneratePresignedUrl:
-          Type: HttpApi
-          Properties:
-            Path: /api/upload
-            Method: GET
-            ApiId: REPLACE_WITH_API_ID
-            Auth:
-              Authorizer: CognitoAuthorizer
+
+  UploadIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref SharedApiId
+      IntegrationType: AWS_PROXY
+      IntegrationUri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${AI4NGUploadLambda.Arn}/invocations
+      PayloadFormatVersion: '2.0'
+      IntegrationMethod: POST
+
+  UploadRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref SharedApiId
+      RouteKey: GET /api/upload
+      Target: !Sub integrations/${UploadIntegration}
+
+  LambdaInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref AI4NGUploadLambda
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${SharedApiId}/*/GET/api/upload
 
 Outputs:
   UploadApiEndpoint:
-    Description: "EEG Upload API endpoint URL"
-    Value: !Sub "https://${SharedApiId}.execute-api.${AWS::Region}.amazonaws.com/dev/api/upload"
+    Description: EEG Upload API endpoint URL
+    Value: !Sub https://${SharedApiId}.execute-api.${AWS::Region}.amazonaws.com/dev/api/upload
