@@ -21,6 +21,12 @@ public class Function
             context.Logger.LogLine($"Function started at: {DateTime.Now}");
             context.Logger.LogLine($"Request: {request}");
             context.Logger.LogLine($"Request Headers: {request.Headers}");
+            context.Logger.LogLine("Headers:");
+            foreach (var header in request.Headers)
+            {
+                context.Logger.LogLine($"{header.Key}: {header.Value}");
+            }
+
 
             var queryParams = request.QueryStringParameters ?? new Dictionary<string, string>();
             if (!queryParams.TryGetValue("fileName", out var fileName) || string.IsNullOrEmpty(fileName))
