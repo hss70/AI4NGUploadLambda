@@ -18,16 +18,17 @@ public class Function
         {
             var bucketName = Environment.GetEnvironmentVariable("UPLOAD_BUCKET");
 
-            context.Logger.LogLine($"Function started at: {DateTime.Now}");
-            context.Logger.LogLine($"Request: {request}");
-            context.Logger.LogLine($"Request Headers: {request.Headers}");
-            context.Logger.LogLine("Headers:");
-            foreach (var header in request.Headers)
-            {
-                context.Logger.LogLine($"{header.Key}: {header.Value}");
-            }
-
-
+        /*
+        Debug headers
+                    context.Logger.LogLine($"Function started at: {DateTime.Now}");
+                    context.Logger.LogLine($"Request: {request}");
+                    context.Logger.LogLine($"Request Headers: {request.Headers}");
+                    context.Logger.LogLine("Headers:");
+                    foreach (var header in request.Headers)
+                    {
+                        context.Logger.LogLine($"{header.Key}: {header.Value}");
+                    }
+        */
             var queryParams = request.QueryStringParameters ?? new Dictionary<string, string>();
             if (!queryParams.TryGetValue("fileName", out var fileName) || string.IsNullOrEmpty(fileName))
                 return Error(400, "Missing 'fileName'");
@@ -111,13 +112,21 @@ public class Function
     }
     private string GetJwtFromRequest(APIGatewayProxyRequest request)
     {
-        if (request.Headers != null &&
-            request.Headers.TryGetValue("Authorization", out var authHeader) &&
-            authHeader.StartsWith("Bearer "))
+        if (request.Headers != null)
         {
-            return authHeader.Substring("Bearer ".Length);
+            // Case-insensitive search for "authorization"
+            var authHeaderKey = request.Headers.Keys
+                .FirstOrDefault(k => k.Equals("Authorization", StringComparison.OrdinalIgnoreCase));
+
+            if (authHeaderKey != null && request.Headers.TryGetValue(authHeaderKey, out var authHeader))
+            {
+                if (authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+                {
+                    return authHeader.Substring("Bearer ".Length);
+                }
+            }
         }
-        return null;
+        return String.Empty;
     }
 
     private static Amazon.RegionEndpoint GetRegion()
