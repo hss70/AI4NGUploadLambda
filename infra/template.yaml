@@ -35,7 +35,7 @@ Resources:
             BucketName: !Ref EEGUploadBucket
 
   UploadIntegration:
-    Type: AWS::ApiGatewayV2::Integration
+    Type: AWS::ApiGatewayV2::Integration #handles linking the API Gateway to the Lambda function
     Properties:
       ApiId: !Ref SharedApiId
       IntegrationType: AWS_PROXY
@@ -47,7 +47,9 @@ Resources:
     Type: AWS::ApiGatewayV2::Route
     Properties:
       ApiId: !Ref SharedApiId
-      RouteKey: GET /api/upload
+      RouteKey: GET /api/upload #route for uploading EEG data
+      AuthorizationType: JWT
+      AuthorizerId: !ImportValue SharedApiAuthorizerId
       Target: !Sub integrations/${UploadIntegration}
 
   LambdaInvokePermission:
