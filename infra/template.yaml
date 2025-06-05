@@ -64,3 +64,8 @@ Outputs:
   UploadApiEndpoint:
     Description: EEG Upload API endpoint URL
     Value: !Sub https://${SharedApiId}.execute-api.${AWS::Region}.amazonaws.com/dev/api/upload
+  EEGUploadBucketName:
+    Description: Name of the EEG upload bucket
+    Value: !Ref EEGUploadBucket
+    Export:
+      Name: EEGUploadBucketName
