@@ -21,7 +21,8 @@ Resources:
       VersioningConfiguration:
         Status: Enabled
       NotificationConfiguration:
-        EventBridgeConfiguration: {} # this sends S3:ObjectCreated events to the default bus. This can be changed to a custom bus if needed in the future.
+        EventBridgeConfiguration: 
+          EventBridgeEnabled: true
 
   AI4NGUploadLambda:
     Type: AWS::Serverless::Function
