@@ -17,7 +17,7 @@ Resources:
   EEGUploadBucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: ai4ngstore-dev
+      BucketName: !Sub "ai4ngstore-${AWS::AccountId}-${AWS::Region}-${AWS::StackName}"
       VersioningConfiguration:
         Status: Enabled
       NotificationConfiguration:

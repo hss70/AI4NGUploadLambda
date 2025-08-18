@@ -17,19 +17,8 @@ public class Function
         try
         {
             var bucketName = Environment.GetEnvironmentVariable("UPLOAD_BUCKET");
-
-        /*
-        Debug headers
-                    context.Logger.LogLine($"Function started at: {DateTime.Now}");
-                    context.Logger.LogLine($"Request: {request}");
-                    context.Logger.LogLine($"Request Headers: {request.Headers}");
-                    context.Logger.LogLine("Headers:");
-                    foreach (var header in request.Headers)
-                    {
-                        context.Logger.LogLine($"{header.Key}: {header.Value}");
-                    }
-        */
             var queryParams = request.QueryStringParameters ?? new Dictionary<string, string>();
+            
             if (!queryParams.TryGetValue("fileName", out var fileName) || string.IsNullOrEmpty(fileName))
                 return Error(400, "Missing 'fileName'");
 
@@ -40,7 +29,18 @@ public class Function
             if (string.IsNullOrEmpty(username))
                 return Error(400, "Username not found in JWT claims");
 
-            context.Logger.LogLine($"User: {username}");
+            // Generate sessionId from userId + sessionName
+            var sessionId = GenerateSessionId(username, saveLocation);
+            
+            context.Logger.LogLine(JsonSerializer.Serialize(new {
+                level = "INFO",
+                message = "Upload request started",
+                sessionId,
+                sessionName = saveLocation,
+                userId = username,
+                fileName
+            }));
+            
             var key = $"{username}/{saveLocation}/{fileName}";
             var expiresIn = TimeSpan.FromHours(1);
 
@@ -60,19 +60,36 @@ public class Function
             if (presignRequest.Expires <= DateTime.UtcNow)
                 return Error(400, "Expiration time must be in the future");
             
-            Console.WriteLine("GetPreSignedUrlRequest");
             var url = s3Client.GetPreSignedURL(presignRequest);
+            
+            context.Logger.LogLine(JsonSerializer.Serialize(new {
+                level = "INFO",
+                message = "Presigned URL generated",
+                sessionId,
+                sessionName = saveLocation,
+                userId = username,
+                fileName,
+                expiresIn = expiresIn.TotalMinutes
+            }));
 
             return new APIGatewayProxyResponse
             {
                 StatusCode = 200,
-                Body = JsonSerializer.Serialize(new { presigned_url = url }),
+                Body = JsonSerializer.Serialize(new { 
+                    presigned_url = url,
+                    session_id = sessionId,
+                    expires_in = (int)expiresIn.TotalSeconds
+                }),
                 Headers = new Dictionary<string, string> { ["Content-Type"] = "application/json" }
             };
         }
         catch (Exception ex)
         {
-            context.Logger.LogLine($"Exception: {ex.ToString()}");
+            context.Logger.LogLine(JsonSerializer.Serialize(new {
+                level = "ERROR",
+                message = "Upload request failed",
+                error = ex.Message
+            }));
             return Error(500, ex.Message);
         }
     }
@@ -129,6 +146,12 @@ public class Function
         return String.Empty;
     }
 
+    private static int GenerateSessionId(string userId, string sessionName)
+    {
+        return Math.Abs((userId + sessionName).Aggregate(0, (a, b) => 
+            ((a << 5) - a) + b));
+    }
+    
     private static Amazon.RegionEndpoint GetRegion()
     {
         // 1. Check environment variable
