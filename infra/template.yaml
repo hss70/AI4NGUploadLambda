@@ -1,4 +1,4 @@
-AWSTemplateFormatVersion: '2010-09-09'
+AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
 Description: AI4NG EEG Upload Lambda API (Manual API Integration)
 
@@ -17,11 +17,11 @@ Resources:
   EEGUploadBucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Sub "ai4ngstore-${AWS::AccountId}-${AWS::Region}-${AWS::StackName}"
+      BucketName: ai4ngstore-dev
       VersioningConfiguration:
         Status: Enabled
       NotificationConfiguration:
-        EventBridgeConfiguration: 
+        EventBridgeConfiguration:
           EventBridgeEnabled: true
 
   AI4NGUploadLambda:
@@ -43,7 +43,7 @@ Resources:
       ApiId: !Ref SharedApiId
       IntegrationType: AWS_PROXY
       IntegrationUri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${AI4NGUploadLambda.Arn}/invocations
-      PayloadFormatVersion: '2.0'
+      PayloadFormatVersion: "2.0"
       IntegrationMethod: POST
 
   UploadRoute:
