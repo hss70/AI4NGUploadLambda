@@ -29,11 +29,18 @@ Resources:
     Properties:
       Handler: AI4NGUploadLambda::AI4NGUploadLambda.Function::FunctionHandler
       CodeUri: ../src/AI4NGUploadLambda
+      VpcConfig:
+        SecurityGroupIds:
+          - !ImportValue NetworkStack-PrivateSG
+        SubnetIds: !Split
+          - ','
+          - !ImportValue NetworkStack-PrivateSubnetIds
       Environment:
         Variables:
           UPLOAD_BUCKET: !Ref EEGUploadBucket
       Policies:
         - AWSLambdaBasicExecutionRole
+        - AWSLambdaVPCAccessExecutionRole
         - S3WritePolicy:
             BucketName: !Ref EEGUploadBucket
 
