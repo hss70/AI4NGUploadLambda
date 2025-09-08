@@ -6,6 +6,10 @@ Parameters:
   SharedApiId:
     Type: String
     Description: Existing API Gateway HTTP API ID
+  Environment:
+    Type: String
+    Default: dev
+    AllowedValues: [dev, prod]
 
 Globals:
   Function:
@@ -17,7 +21,7 @@ Resources:
   EEGUploadBucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: ai4ngstore-dev
+      BucketName: !Sub ai4ngstore-${Environment}-${AWS::AccountId}-${AWS::Region}
       VersioningConfiguration:
         Status: Enabled
       NotificationConfiguration:
@@ -33,7 +37,7 @@ Resources:
         SecurityGroupIds:
           - !ImportValue NetworkStack-PrivateSG
         SubnetIds: !Split
-          - ','
+          - ","
           - !ImportValue NetworkStack-PrivateSubnetIds
       Environment:
         Variables:
@@ -78,4 +82,4 @@ Outputs:
     Description: Name of the EEG upload bucket
     Value: !Ref EEGUploadBucket
     Export:
-      Name: EEGUploadBucketName
+      Name: !Sub EEGUploadBucketName-${Environment}
