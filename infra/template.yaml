@@ -3,53 +3,127 @@ Transform: AWS::Serverless-2016-10-31
 Description: AI4NG EEG Upload Lambda API (Manual API Integration)
 
 Parameters:
-  SharedApiId:
+  Environment:
     Type: String
-    Description: Existing API Gateway HTTP API ID
+    AllowedValues:
+      - dev
+      - staging
+      - prod
+    Default: dev
 
-Globals:
-  Function:
-    Timeout: 30
-    MemorySize: 256
-    Runtime: dotnet8
+  SharedHttpApiId:
+    Type: String
+    Description: Shared HTTP API ID from shared-api stack
+
+  ParticipantAuthorizerId:
+    Type: String
+    Description: Participant JWT authorizer ID from shared-api stack
+
+  PrivateSubnetIds:
+    Type: CommaDelimitedList
+    Description: Private subnet IDs for Lambda VPC config
+
+  PrivateSecurityGroupId:
+    Type: String
+    Description: Shared private security group ID
 
 Resources:
   EEGUploadBucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: ai4ngstore-dev
+      BucketName: !Sub ai4ng-${Environment}-eeg-upload-${AWS::AccountId}
       VersioningConfiguration:
         Status: Enabled
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
       NotificationConfiguration:
         EventBridgeConfiguration:
           EventBridgeEnabled: true
 
+  EEGUploadBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref EEGUploadBucket
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: DenyInsecureTransport
+            Effect: Deny
+            Principal: "*"
+            Action: "s3:*"
+            Resource:
+              - !GetAtt EEGUploadBucket.Arn
+              - !Sub ${EEGUploadBucket.Arn}/*
+            Condition:
+              Bool:
+                aws:SecureTransport: false
+
+  UploadLambdaLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/ai4ng-${Environment}-upload
+      RetentionInDays: 30
+
+  AI4NGUploadLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub ai4ng-${Environment}-upload-lambda-role-${AWS::Region}
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole
+      Policies:
+        - PolicyName: UploadBucketAccess
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:PutObject
+                  - s3:GetObject
+                  - s3:AbortMultipartUpload
+                  - s3:ListBucket
+                Resource:
+                  - !GetAtt EEGUploadBucket.Arn
+                  - !Sub ${EEGUploadBucket.Arn}/*
+        - PolicyName: KmsOptionalPlaceholder
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement: []
   AI4NGUploadLambda:
     Type: AWS::Serverless::Function
     Properties:
       Handler: AI4NGUploadLambda::AI4NGUploadLambda.Function::FunctionHandler
       CodeUri: ../src/AI4NGUploadLambda
-      VpcConfig:
-        SecurityGroupIds:
-          - !ImportValue NetworkStack-PrivateSG
-        SubnetIds: !Split
-          - ','
-          - !ImportValue NetworkStack-PrivateSubnetIds
+      MemorySize: 512
+      Timeout: 30
+      Role: !GetAtt AI4NGUploadLambdaRole.Arn
       Environment:
         Variables:
-          UPLOAD_BUCKET: !Ref EEGUploadBucket
-      Policies:
-        - AWSLambdaBasicExecutionRole
-        - AWSLambdaVPCAccessExecutionRole
-        - S3WritePolicy:
-            BucketName: !Ref EEGUploadBucket
+          EEG_UPLOAD_BUCKET: !Ref EEGUploadBucket
+          ENVIRONMENT: !Ref Environment
+      VpcConfig:
+        SecurityGroupIds:
+          - !Ref PrivateSecurityGroupId
+        SubnetIds: !Ref PrivateSubnetIds
 
   UploadIntegration:
     Type: AWS::ApiGatewayV2::Integration #handles linking the API Gateway to the Lambda function
     Properties:
       ApiId: !Ref SharedApiId
       IntegrationType: AWS_PROXY
-      IntegrationUri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${AI4NGUploadLambda.Arn}/invocations
+      IntegrationUri: !GetAtt AI4NGUploadLambda.Arn
       PayloadFormatVersion: "2.0"
       IntegrationMethod: POST
 
@@ -59,7 +133,7 @@ Resources:
       ApiId: !Ref SharedApiId
       RouteKey: GET /api/upload #route for uploading EEG data
       AuthorizationType: JWT
-      AuthorizerId: !ImportValue SharedApiAuthorizerId
+      AuthorizerId: !Ref ParticipantAuthorizerId
       Target: !Sub integrations/${UploadIntegration}
 
   LambdaInvokePermission:
@@ -75,7 +149,13 @@ Outputs:
     Description: EEG Upload API endpoint URL
     Value: !Sub https://${SharedApiId}.execute-api.${AWS::Region}.amazonaws.com/dev/api/upload
   EEGUploadBucketName:
-    Description: Name of the EEG upload bucket
+    Description: S3 bucket name for uploaded EEG/session files
     Value: !Ref EEGUploadBucket
-    Export:
-      Name: EEGUploadBucketName
+
+  EEGUploadBucketArn:
+    Description: S3 bucket ARN for uploaded EEG/session files
+    Value: !GetAtt EEGUploadBucket.Arn
+
+  UploadLambdaName:
+    Description: Upload Lambda function name
+    Value: !Ref AI4NGUploadLambda
