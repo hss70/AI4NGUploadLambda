@@ -7,12 +7,16 @@ phases:
     commands:
       - pip install aws-sam-cli
 
+  pre_build:
+    commands:
+      - ARTIFACT_BUCKET=$(aws cloudformation list-exports --query "Exports[?Name=='AI4NG-dev-SamArtifactBucketName'].Value" --output text)
+
   build:
     commands:
       - sam build --template-file infra/template.yaml
       - sam package
         --template-file .aws-sam/build/template.yaml
-        --s3-bucket ${ArtifactBucketName}
+        --s3-bucket $ARTIFACT_BUCKET
         --s3-prefix AI4NG-UploadLambda-${Environment}
         --output-template-file packaged.yaml
 
