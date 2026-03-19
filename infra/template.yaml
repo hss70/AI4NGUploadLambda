@@ -11,14 +11,6 @@ Parameters:
       - prod
     Default: dev
 
-  PrivateSubnetIds:
-    Type: CommaDelimitedList
-    Description: Private subnet IDs for Lambda VPC config
-
-  PrivateSecurityGroupId:
-    Type: String
-    Description: Shared private security group ID
-
 Resources:
   EEGUploadBucket:
     Type: AWS::S3::Bucket
@@ -108,8 +100,10 @@ Resources:
           ENVIRONMENT: !Ref Environment
       VpcConfig:
         SecurityGroupIds:
-          - !Ref PrivateSecurityGroupId
-        SubnetIds: !Ref PrivateSubnetIds
+          - Fn::ImportValue: NetworkStack-PrivateSG
+        SubnetIds: !Split
+          - ","
+          - Fn::ImportValue: NetworkStack-PrivateSubnetIds
 
   UploadIntegration:
     Type: AWS::ApiGatewayV2::Integration

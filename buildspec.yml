@@ -1,0 +1,29 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      dotnet: 8.0
+    commands:
+      - dotnet tool install -g Amazon.Lambda.Tools
+      - pip install aws-sam-cli
+  pre_build:
+    commands:
+      - sam --version
+      - dotnet --version
+  build:
+    commands:
+      - sam build --template-file infra/template.yaml
+  post_build:
+    commands:
+      - sam deploy \
+        --template-file .aws-sam/build/template.yaml \
+        --stack-name AI4NG-Upload-${Environment} \
+        --capabilities CAPABILITY_NAMED_IAM \
+        --region eu-west-2 \
+        --no-confirm-changeset \
+        --no-fail-on-empty-changeset \
+        --parameter-overrides \
+        Environment=${Environment} \
+        PrivateSubnetIds=${PrivateSubnetIds} \
+        PrivateSecurityGroupId=${PrivateSecurityGroupId}
