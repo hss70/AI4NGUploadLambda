@@ -26,6 +26,17 @@ Resources:
       NotificationConfiguration:
         EventBridgeConfiguration:
           EventBridgeEnabled: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      Tags:
+        - Key: Project
+          Value: AI4NG
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: ManagedBy
+          Value: CloudFormation
 
   EEGUploadBucketPolicy:
     Type: AWS::S3::BucketPolicy
@@ -48,21 +59,20 @@ Resources:
   UploadLambdaLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: !Sub /aws/lambda/ai4ng-${Environment}-upload
+      LogGroupName: !Sub /aws/lambda/${AI4NGUploadLambda}
       RetentionInDays: 30
 
   AI4NGUploadLambdaRole:
     Type: AWS::IAM::Role
     Properties:
+      RoleName: !Sub ai4ng-${Environment}-upload-lambda-role
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
           - Effect: Allow
             Principal:
-              Service:
-                - lambda.amazonaws.com
-            Action:
-              - sts:AssumeRole
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
         - arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole
@@ -76,16 +86,19 @@ Resources:
                   - s3:PutObject
                   - s3:GetObject
                   - s3:AbortMultipartUpload
-                Resource:
-                  - !Sub ${EEGUploadBucket.Arn}/*
+                Resource: !Sub ${EEGUploadBucket.Arn}/*
               - Effect: Allow
-                Action:
-                  - s3:ListBucket
-                Resource:
-                  - !GetAtt EEGUploadBucket.Arn
+                Action: s3:ListBucket
+                Resource: !GetAtt EEGUploadBucket.Arn
+      Tags:
+        - Key: Project
+          Value: AI4NG
+        - Key: Environment
+          Value: !Ref Environment
 
   AI4NGUploadLambda:
     Type: AWS::Serverless::Function
+    DependsOn: UploadLambdaLogGroup
     Properties:
       FunctionName: !Sub ai4ng-${Environment}-upload
       Runtime: dotnet8
@@ -104,6 +117,9 @@ Resources:
         SubnetIds: !Split
           - ","
           - Fn::ImportValue: NetworkStack-PrivateSubnetIds
+      Tags:
+        Project: AI4NG
+        Environment: !Ref Environment
 
   UploadIntegration:
     Type: AWS::ApiGatewayV2::Integration
@@ -145,6 +161,7 @@ Outputs:
   UploadApiPath:
     Description: Upload route path
     Value: !Sub /${Environment}/api/upload
+
   EEGUploadBucketName:
     Description: S3 bucket name for uploaded EEG files
     Value: !Ref EEGUploadBucket
@@ -154,7 +171,21 @@ Outputs:
   EEGUploadBucketArn:
     Description: S3 bucket ARN for uploaded EEG/session files
     Value: !GetAtt EEGUploadBucket.Arn
+    Export:
+      Name: !Sub AI4NG-${Environment}-EEGUploadBucketArn
 
   UploadLambdaName:
     Description: Upload Lambda function name
     Value: !Ref AI4NGUploadLambda
+
+  UploadLambdaLogGroupName:
+    Description: Upload Lambda log group name
+    Value: !Ref UploadLambdaLogGroup
+    Export:
+      Name: !Sub AI4NG-${Environment}-UploadLambdaLogGroupName
+
+  UploadLambdaArn:
+    Description: Upload Lambda function ARN
+    Value: !GetAtt AI4NGUploadLambda.Arn
+    Export:
+      Name: !Sub AI4NG-${Environment}-UploadLambdaArn
