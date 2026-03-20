@@ -145,10 +145,11 @@ Outputs:
   UploadApiPath:
     Description: Upload route path
     Value: !Sub /${Environment}/api/upload
-
   EEGUploadBucketName:
-    Description: S3 bucket name for uploaded EEG/session files
+    Description: S3 bucket name for uploaded EEG files
     Value: !Ref EEGUploadBucket
+    Export:
+      Name: !Sub AI4NG-${Environment}-EEGUploadBucketName
 
   EEGUploadBucketArn:
     Description: S3 bucket ARN for uploaded EEG/session files
