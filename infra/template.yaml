@@ -59,7 +59,7 @@ Resources:
   UploadLambdaLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: !Sub /aws/lambda/${AI4NGUploadLambda}
+      LogGroupName: !Sub /aws/lambda/ai4ng-${Environment}-upload
       RetentionInDays: 30
 
   AI4NGUploadLambdaRole:
