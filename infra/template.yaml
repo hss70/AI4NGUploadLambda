@@ -96,7 +96,7 @@ Resources:
       Role: !GetAtt AI4NGUploadLambdaRole.Arn
       Environment:
         Variables:
-          EEG_UPLOAD_BUCKET: !Ref EEGUploadBucket
+          UPLOAD_BUCKET: !Ref EEGUploadBucket
           ENVIRONMENT: !Ref Environment
       VpcConfig:
         SecurityGroupIds:
